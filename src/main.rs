@@ -13,7 +13,8 @@ fn main() {
 
     println!("The new key is '{}' and the new value is '{}'", key, value);
 
-    let mut database = Database::new().expect("Database::new() failed");
+    let path: PathBuf = PathBuf::from(r"C:\Users\Catherine\Documents\Projects\rust-intro\kv.db");
+    let mut database = Database::new(path).expect("Database::new() failed");
     database.insert(key.clone(), value.clone());
     database.flush();
 }
@@ -22,10 +23,9 @@ fn main() {
 struct Database(PathBuf, HashMap<String, String>);
 
 impl Database {
-    fn new() -> Result<Database> {
-        let path: PathBuf = PathBuf::from(r"C:\Users\Catherine\Documents\Projects\rust-intro\kv.db");
+    fn new(path: PathBuf) -> Result<Database> {
         let mut map = HashMap::new();
-        let contents = fs::read_to_string("kv.db")?;
+        let contents = fs::read_to_string(&path)?;
         for line in contents.lines() {
             let (key, value) = line.split_once('\t').expect("Corrupt database");
             map.insert(key.to_owned(), value.to_owned());
@@ -44,6 +44,6 @@ impl Database {
             let kvpair = format!("{}\t{}\n", pairs.0, pairs.1);
             contents.push_str(&kvpair);
         }
-        fs::write("kv.db", contents)
+        fs::write(self.0, contents)
     }
 }
