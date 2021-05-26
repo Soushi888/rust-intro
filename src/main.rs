@@ -11,7 +11,7 @@ fn main() {
     let key: String = arguments.next().expect("Key was not there");
     let value: String = arguments.next().expect("Value was not there");
 
-    println!("The new key is '{}' and the new value is '{}'", key, value);
+    println!("The new value of '{}' is now '{}'", key, value);
 
     let path: PathBuf = PathBuf::from(r"C:\Users\Catherine\Documents\Projects\rust-intro\kv.db");
     let mut database = Database::new(path).expect("Database::new() failed");
@@ -30,7 +30,6 @@ impl Database {
             let (key, value) = line.split_once('\t').expect("Corrupt database");
             map.insert(key.to_owned(), value.to_owned());
         }
-
         Ok(Database(path, map))
     }
 
@@ -39,11 +38,24 @@ impl Database {
     }
 
     fn flush(self) -> Result<()> {
-        let mut contents = String::new();
-        for pairs in self.1 {
-            let kvpair = format!("{}\t{}\n", pairs.0, pairs.1);
-            contents.push_str(&kvpair);
-        }
-        fs::write(self.0, contents)
+        do_flush(&self)
     }
+}
+
+impl Drop for Database {
+    fn drop(&mut self) {
+        let _ = do_flush(self);
+    }
+}
+
+fn do_flush(database: &Database) -> Result<()> {
+    println!("do_flush called");
+    let mut contents = String::new();
+    for (key, value) in &database.1 {
+        contents.push_str(&key);
+        contents.push('\t');
+        contents.push_str(&value);
+        contents.push('\n');
+    }
+    fs::write(&database.0, contents)
 }
